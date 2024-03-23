@@ -25,7 +25,7 @@ contract RootStorage is Ownable(msg.sender) {
 
     // Function to add a new project's Merkle root, only callable by the contract owner
     function addProject(string memory merkleRoot) public onlyOwner {
-        require(bytes(merkleRoot).length == 64, "Invalid Merkle root format");
+        require(bytes(merkleRoot).length == 66, "Invalid Merkle root format");
         Project storage project=projects.push();
         project.merkleRoot=merkleRoot;
         emit ProjectAdded(projectCount, merkleRoot);

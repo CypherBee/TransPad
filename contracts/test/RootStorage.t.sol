@@ -31,9 +31,15 @@ contract RootStorageTest is Test,RootStorage{
     
     }
 
-    function test_ProjectRoot() public {
+    function test_ProjectRoot() public view {
          assertEq(rootStorage.getProjectMerkleRoot(0),"0x1f5ef9ffe259f05968e28dcdba2ceb2bc56d4af13dc54b198db979914891e632");
     } 
+
+    function test_RootFormat() public {
+        vm.expectRevert("Invalid Merkle root format");
+        rootStorage.addProject("0x1f5ef9ffe259f05968e28dcdba");
+
+    }
 
     function test_OnlyOwnerAddProject() public{
         vm.prank(address(0x123));
@@ -61,7 +67,7 @@ contract RootStorageTest is Test,RootStorage{
     // }
 
      
-    function test_MultiProjectRoot() public {
+    function test_MultiProjectRoot() public view{
     assertEq(rootStorage.getProjectMerkleRoot(1),"0x2f5ef9ffe259f05968e28dcdba2ceb2bc56d4af13dc54b198db979914891e632");
     assertEq(rootStorage.getProjectMerkleRoot(2),"0x3f5ef9ffe259f05968e28dcdba2ceb2bc56d4af13dc54b198db979914891e632");
     assertEq(rootStorage.getProjectMerkleRoot(3),"0x4f5ef9ffe259f05968e28dcdba2ceb2bc56d4af13dc54b198db979914891e632");
@@ -69,11 +75,11 @@ contract RootStorageTest is Test,RootStorage{
     } 
 
 
-    function test_Get_ProjectCount() public {
+    function test_Get_ProjectCount() public view {
         assertEq(rootStorage.projectCount(),5);
             } 
 
-    function test_Get_All_Roots() public {
+    function test_Get_All_Roots() public view {
      string[] memory allRoots = rootStorage.getAllMerkleRoots();
 
         for (uint256 i = 0; i < allRoots.length; i++) {
