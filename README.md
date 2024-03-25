@@ -17,12 +17,19 @@ This Raffle Application is a decentralized application (dApp) built to facilitat
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
 
+## Files and directories
+- contracts: Contain the smart contracts and their tests using Foundry. To run tests you should install foundry
+- functions: contains the firebase cloud function defintions
+- src contains all the front-end logic using react 
+
 ### Prerequisites
 
 - Node.js
 - npm or yarn
 - Firebase CLI
 - An Ethereum wallet for testing
+- You can use your own firebase database or you can interact with my Own. 
+- To create your own firebase DB, you should modify firebase.js config file.
 
 ### Installation
 
@@ -41,6 +48,7 @@ These instructions will get you a copy of the project up and running on your loc
 
 4. Start the Firebase Emulators
     ```bash
+    cd functions
     npm run serve
 
 5. Start the react App
