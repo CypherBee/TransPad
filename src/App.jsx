@@ -1,6 +1,6 @@
-import Header from './Components/Header'
-import Footer from './Components/Footer'
-import ProjectCards from './Components/Project-Cards.jsx'
+import Header from './components/Header'
+import Footer from './components/Footer'
+import ProjectCards from './components/Project-Cards.jsx'
 import { useState } from 'react';
 
 

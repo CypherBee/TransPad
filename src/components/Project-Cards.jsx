@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import moment from 'moment';
-import db from '../firebase';
-import {getMerkleRoot,selectKFromNAddresses} from './Raffle_calculator.js';
-import { addProjectMerkleRoot } from './PublishMerkleRoot.js';
+import {db,app} from '../../firebase.js';
+import { getFunctions, httpsCallable, connectFunctionsEmulator } from 'firebase/functions';
 import  {ethers}  from 'ethers';
+import {publishMerkleRoot} from '../services/PublishMerkleRoot.js'
 import {
     doc,
     updateDoc,
@@ -16,10 +16,14 @@ import {
 
 
 function ProjectCards({connectedWallet}){
+
+    const functions = getFunctions(app);
+    connectFunctionsEmulator(functions, "localhost", 5001);
+
     
     const [loading, setLoading] = useState(false);
     const [projects, setProjects]=useState([]);
-    const [publishedProjectId, setPublishedProjectId] = useState(null);
+    const [publishedProject, setPublishedProject] = useState(null);
     const [appOwner,setAppOwner]=useState("0x7d5549dF4E94a29660AE30999d2C7fa76542f879")
     const colRef=collection(db,'Projects');
 
@@ -82,36 +86,70 @@ function ProjectCards({connectedWallet}){
         }
     }
 
-    async function handleRunRaffle(projectId) {
-        const project = projects.find(project => project.id === projectId);
-    
-        // Early return if MerkleRoot exists
-        if (project.MerkleRoot) {
-            return;
-        }
-    
+    //------------helper Functions Begin---------------
+
+    async function callAddProject(addresses) {
         try {
-            const participants = project.Participants;
-            const merkleRoot = await getMerkleRoot(participants);
-            const winnersList = selectKFromNAddresses(participants, 3, merkleRoot); 
-    
-            //await setDoc(doc(db, "Winners", project.id), newWinners);
-            await updateDoc(doc(colRef, projectId), { "MerkleRoot": merkleRoot,Winners:winnersList });
-    
-            // Update local state if necessary
-            const updatedProjects = projects.map(p => p.id === projectId ? { ...p, MerkleRoot: merkleRoot,Winners:winnersList} : p);
-            setProjects(updatedProjects);
+            const getMerkleRoot = httpsCallable(functions, 'calculate_merkleRoot');
+            const result = await getMerkleRoot(addresses);
+            console.log('getMerkleRoot Result:', result);
+            return result.data;
         } catch (error) {
-            console.error(error);
+            console.error('Error in getMerkleRoot:', error);
         }
-    }
+      }
+      
+      async function callSelectKFromNAddresses(addresses, k, merkleRoot) {
+        try {
+            const selectKFromNAddressesFn = httpsCallable(functions, 'select_k_from_n_addresses');
+            const result = await selectKFromNAddressesFn({ addresses, k, merkleRoot });
+            console.log('SelectKFromNAddresses Result:', result.data);
+            return result.data;  
+        } catch (error) {
+            console.error('Error in selectKFromNAddresses:', error);
+        }
+      }
+
+      // Example usage:
+        async function executeCalls(addresses,k) {
+        const merkleRoot = await callAddProject(addresses);
+        const winnersList = await callSelectKFromNAddresses(addresses, k, merkleRoot);
+        return{merkleRoot,winnersList}
+        }
+
+      //------------helper Functions End-------------------
+
+
+        async function handleRunRaffle(projectId) {
+            const project = projects.find(project => project.id === projectId);
+            console.log(projectId)
+            // Early return if MerkleRoot exists
+            if (project.MerkleRoot) {
+                return;
+            }
+            
+            try {
+                setLoading(true);
+                const addresses = project.Participants;
+                const k=3;
+                const {merkleRoot,winnersList} = await executeCalls(addresses, k);
+                console.log("imhere")
+                
+                //await setDoc(doc(db, "Winners", project.id), newWinners);
+                await updateDoc(doc(colRef, projectId), { "MerkleRoot": merkleRoot,"Winners":winnersList });
+        
+                // Update local state if necessary
+                const updatedProjects = projects.map(p => p.id === projectId ? { ...p, MerkleRoot: merkleRoot,Winners:winnersList} : p);
+                setProjects(updatedProjects);
+            } catch (error) {
+                console.error(error);
+            }
+        }
 
 
     const handlePublishRoot = async (projectId) => {
         const project = projects.find(project => project.id === projectId);
-        setLoading(true);
-        setPublishedProjectId(null);
-    
+        setLoading(true);    
         try {
             // Get the signer from the user's wallet
             const provider = new ethers.BrowserProvider(window.ethereum);
@@ -121,18 +159,21 @@ function ProjectCards({connectedWallet}){
             const projectDoc = await getDoc(projectRef);
 
             const projectData = projectDoc.data();
-            if (projectData.isPublished) {
+            if (projectData.isPublished && project.merkleRoot) {
                 console.log('Project is already published.');
                 setLoading(false);
                 return; // Stop the function execution if the project is already published
             }
-
+            const merkleRoot=project.MerkleRoot
             // Call the addProjectMerkleRoot function with the signer and Merkle Root
-            const projectId=await addProjectMerkleRoot(signer, project.MerkleRoot);
+            const resposeId=await publishMerkleRoot(signer, merkleRoot);
+            const scProjectId=Number(resposeId)
+            console.log("scProjectId from UI",scProjectId)
     
             // Update the frontend state and Firestore database
-            setPublishedProjectId(project.id);
-            await updateDoc(projectRef, { isPublished: true },{ScProjectId:projectId});
+            await updateDoc(projectRef, { "isPublished": true, "ScProjectId":scProjectId });
+            setPublishedProject(true);
+
             } 
         catch (error) 
             {
@@ -141,117 +182,68 @@ function ProjectCards({connectedWallet}){
             }
     
         setLoading(false);
+        setPublishedProject(false);
+
     };
 
 
-        return(
-            
-            <div className='projects-container'>
-                
-            {projects.map((project) => (
-                    
-                <div key={project.id} className="project-card">
-                    <div className='image-container'>
-                    <img className='card-image' src={project.PhotoUrl} alt={project.name} />
-                    <h3 className='card-title'>{project.Name}</h3>
-                </div>
-                <div className='info-container'>
-                    <p className='card-text'><strong>participants: </strong>{project.Participants.length}</p>
-                    <p className='card-text'><strong>Raise Goal:</strong> {project.RaiseGoal}$</p>
-                    <p className='card-text'><strong>Sale Ends:</strong> {moment.unix(project.SaleEnds.seconds).format('MMMM Do YYYY, h:mm a')}</p>
-                </div>
-                
-                <button className='participate-button' onClick={()=> handleRegisterInterest(project.id,connectedWallet)} >
-                    {   (()=> {
-                            const currentDate = moment();
-                            const inputDate = moment.unix(project.SaleEnds.seconds);
-
-                            if(!connectedWallet){
-                                return("Connect Wallet")
-                            }    
-
-                            if (!inputDate.isAfter(currentDate)) {
-                                if (project.Winners && project.Winners.includes(connectedWallet)) {
-                                  return "You are Whitelisted";
-                                } else {
-                                  return "You are not Whitelisted";
+    return (
+        <div className='projects-container'>
+            {projects.map((project) => {
+                const currentDate = moment();
+                const inputDate = moment.unix(project.SaleEnds.seconds);
+                const isAfterCurrentDate = inputDate.isAfter(currentDate);
+                const isParticipant = project.Participants.includes(connectedWallet);
+                const isWhitelisted = project.Winners && project.Winners.includes(connectedWallet);
+                const isOwner = connectedWallet && appOwner.toLowerCase() === connectedWallet.toLowerCase();
+                const duration = moment.duration(inputDate.diff(currentDate));
+                const durationString = ` ${Math.floor(duration.asDays())} days ${duration.hours()}hrs ${duration.minutes()}m`;
+    
+                return (
+                    <div key={project.id} className="project-card">
+                        <div className='image-container'>
+                            <img className='card-image' src={project.PhotoUrl} alt={project.Name} />
+                            <h3 className='card-title'>{project.Name}</h3>
+                        </div>
+                        <div className='info-container'>
+                            <p className='card-text'><strong>Participants:</strong> {project.Participants.length}</p>
+                            <p className='card-text'><strong>Raise Goal:</strong> {project.RaiseGoal}$</p>
+                            <p className='card-text'><strong>Sale Ends:</strong> {moment.unix(project.SaleEnds.seconds).format('MMMM Do YYYY, h:mm a')}</p>
+                        </div>
+                        
+                        <button className='participate-button' onClick={() => handleRegisterInterest(project.id, connectedWallet)}>
+                            {!connectedWallet ? "Connect Wallet" :
+                                isAfterCurrentDate ? (isParticipant ? 'Registered' : 'Register Now!') :
+                                isWhitelisted ? "You are Whitelisted" : "You are not Whitelisted"}
+                        </button>
+    
+                        <div className='raffle-container'>
+                            <br></br>
+                            <button className='run-raffle-button' onClick={() => handleRunRaffle(project.id)}>
+                                {isAfterCurrentDate ? ( <>
+                                                        Registration Ends in:<br />{durationString}
+                                                        </>):
+                                    project.MerkleRoot ? (
+                                        !project.isPublished && isOwner ? (
+                                            <div onClick={() => handlePublishRoot(project.id)}>
+                                                Publish Merkle Root:<br />
+                                                {project.MerkleRoot.slice(0,4) + "..." + project.MerkleRoot.slice(-4)}
+                                            </div>
+                                        ) : (
+                                            <>
+                                                {project.isPublished ? "Root is Published:" : "Project Merkle Root:"}<br />
+                                                {project.MerkleRoot.slice(0,4) + "..." + project.MerkleRoot.slice(-4)}
+                                            </>
+                                        )
+                                    ) : 'Raffle Now!'
                                 }
-                              }
-                            
-                              else{
-                                if (project.Participants.includes(connectedWallet)) {
-                                  return 'Registered';
-                                } else {
-                                  return 'Register Now!';
-                                }
-                              }
-                        })()
-                    }
-                      
-                </button>
-                <div className='raffle-container'>
-                <br></br>
-
-                <button className='run-raffle-button' onClick={() => handleRunRaffle(project.id)}>
-                    {
-                        (() => {
-                        const currentDate = moment();
-                        const inputDate = moment.unix(project.SaleEnds.seconds);
-                        if (inputDate.isAfter(currentDate)) {
-                            const duration = moment.duration(inputDate.diff(currentDate));
-                            const durationString = `${duration.months()}m ${duration.days()}days ${duration.hours()}hrs ${duration.minutes()}m`;
-                            return (
-                                <div>
-                                Registration Ends in:<br />
-                                {durationString}
-                                </div>
-                                );
-                            } 
-
-                        else 
-                            {
-                            {/*console.log("Project State Merkle root:" + project.MerkleRoot)*/}  
-                            if(project.MerkleRoot){
-                                    
-                                if(connectedWallet && appOwner.toLowerCase() === connectedWallet.toLowerCase()){                          
-                                    return(
-                                    <div onClick={()=>handlePublishRoot(project.id)}>
-
-                                    {loading && project.id === publishedProjectId ? (
-                                    <p>Loading...</p>) 
-                                        : (
-                                    <>
-                                    Publish Merkle Root:<br />
-                                    {project.MerkleRoot.slice(0,4) + "..." + project.MerkleRoot.slice(-4)}
-                                    </>
-                                    )}
-                                    
-                                    </div>);
-                                    }
-                                else {
-                                    return(
-                                    <>
-                                    Project Merkle Root:<br />
-                                    {project.MerkleRoot.slice(0,4) + "..." + project.MerkleRoot.slice(-4)}
-                                    </>
-                                    )
-                                }
- 
-                                }
-                            return 'Raffle Now!';
-                            }
-
-                        })()
-                    }
-                </button>
-
-                </div>
-
-            </div>   
-            ))}
-
+                            </button>
+                        </div>
+                    </div>
+                );
+            })}
         </div>
-        );
+    );
     }
 
 

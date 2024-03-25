@@ -10,6 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@openzeppelin/merkle-tree": "github:OpenZeppelin/merkle-tree",
+    "ethers": "^6.11.1",
+    "firebase": "^10.9.0",
+    "moment": "^2.30.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
