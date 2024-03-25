@@ -44,6 +44,7 @@ These instructions will get you a copy of the project up and running on your loc
     npm run serve
 
 5. Start the react App
+    ```bash
     npm run dev
 
 ## Usage
