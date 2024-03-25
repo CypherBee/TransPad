@@ -34,8 +34,8 @@ const updateProjectMerkleRoot = async (signer,projectId, newMerkleRoot) => {
     console.log(`Project ${projectId} updated with new Merkle root: ${newMerkleRoot}`);
 };
 
-// const TESTNET_PRIVATE_KEY="86ca623bd668e9ae2210996da95b945b4e9bbfe4808481b844b20316b8381804"
-// const ALCHEMY_TESTNET_RPC_URL="https://eth-sepolia.g.alchemy.com/v2/6UFMdV_kkQBCIM0GENrOZPvF0GfiK3YY"
+// const TESTNET_PRIVATE_KEY=""
+// const ALCHEMY_TESTNET_RPC_URL=""
 // const provider = new JsonRpcProvider(ALCHEMY_TESTNET_RPC_URL);
 // const wallet = new ethers.Wallet(TESTNET_PRIVATE_KEY, provider);
 // addProjectMerkleRoot(wallet,"0xe902652B55eC2F7fc255A9598C5719FB3C974c34");
