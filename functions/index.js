@@ -6,7 +6,6 @@ import {getMerkleRoot, selectKFromNAddresses } from './Raffle_calculator.js';
 
 
 // Export Cloud Functions
-
 export const select_k_from_n_addresses = functions.https.onCall((request) => {
   return selectKFromNAddresses(request.data.addresses,request.data.k,request.data.merkleRoot);
 
