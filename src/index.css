@@ -13,11 +13,26 @@ button{
   font-size: 20px;
   border:none;
   cursor:pointer;
-  border-radius: 2px;
+  border-radius: 10px;
   padding: 10px 20px;
 
 }
 
+button:disabled {
+  cursor: default;
+}
+
+button.participate-button:disabled {
+    background-color: #cccccc; /* Gray background */
+    color: #666666; /* Darker text */
+    border: 1px solid #ae4141; /* Optional: Add a border */
+}
+
+button.participate-button.status-positive {
+  background-color: #32de25; 
+  color:hwb(0 0% 100%)
+
+}
 .connect-button{
   padding: 10px 20px;
   border-radius:5px;
@@ -98,8 +113,18 @@ padding-left:10px;
     margin:10px;
     text-align: center;
     max-width: 400px;
+    min-width: 250px;
     display: inline-block;
+    overflow: hidden;
+    flex-direction: row;
+    flex-basis: 33.33%;
+    -webkit-box-flex: 0;
+    flex-grow: 0;
+
+
 }
+
+
 
 .image-container {
   width: 100%; 
@@ -111,16 +136,20 @@ padding-left:10px;
 
 
 .info-container {
-  width: 100%; 
+  box-sizing: border-box;
   display: flex;
-  flex-direction: column; /* Stack the text items vertically */
-  align-items: center; /* Center-align the text items horizontally */
-  margin-top: 10px; /* Space between image and text */
+  flex-flow: wrap;
+  width: 100%;
+  -webkit-box-pack: justify;
+  justify-content: space-between;
+  -webkit-box-align: center;
+  align-items: center;
+  margin-top: 12px;
+
 }
 
 .project-card .card-image{
     max-width: 100%;
-  /* Set the width of the image */
     height: 150px;
     margin-bottom: 10px;
     border-radius: 20px;

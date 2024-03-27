@@ -144,12 +144,15 @@ function ProjectCards({connectedWallet}){
             } catch (error) {
                 console.error(error);
             }
+            setLoading(false);
+
         }
 
 
     const handlePublishRoot = async (projectId) => {
         const project = projects.find(project => project.id === projectId);
         setLoading(true);    
+        setPublishedProject(false);
         try {
             // Get the signer from the user's wallet
             const provider = new ethers.BrowserProvider(window.ethereum);
@@ -164,14 +167,18 @@ function ProjectCards({connectedWallet}){
                 setLoading(false);
                 return; // Stop the function execution if the project is already published
             }
+
             const merkleRoot=project.MerkleRoot
             // Call the addProjectMerkleRoot function with the signer and Merkle Root
             const resposeId=await publishMerkleRoot(signer, merkleRoot);
             const scProjectId=Number(resposeId)
             console.log("scProjectId from UI",scProjectId)
+
     
             // Update the frontend state and Firestore database
             await updateDoc(projectRef, { "isPublished": true, "ScProjectId":scProjectId });
+            const updatedProjects = projects.map(p => p.id === projectId ? { ...p, isPublished:true} : p);
+            setProjects(updatedProjects);
             setPublishedProject(true);
 
             } 
@@ -179,10 +186,10 @@ function ProjectCards({connectedWallet}){
             {
             console.error('Error publishing the Merkle root:', error);
             // Handle the error as needed
+            setPublishedProject(false);
             }
     
         setLoading(false);
-        setPublishedProject(false);
 
     };
 
@@ -191,8 +198,8 @@ function ProjectCards({connectedWallet}){
         <div className='projects-container'>
             {projects.map((project) => {
                 const currentDate = moment();
-                const inputDate = moment.unix(project.SaleEnds.seconds);
-                const isAfterCurrentDate = inputDate.isAfter(currentDate);
+                const inputDate = moment.unix(project.RegistrationEnds.seconds);
+                const isRegistrationOn = inputDate.isAfter(currentDate);
                 const isParticipant = project.Participants.includes(connectedWallet);
                 const isWhitelisted = project.Winners && project.Winners.includes(connectedWallet);
                 const isOwner = connectedWallet && appOwner.toLowerCase() === connectedWallet.toLowerCase();
@@ -206,38 +213,67 @@ function ProjectCards({connectedWallet}){
                             <h3 className='card-title'>{project.Name}</h3>
                         </div>
                         <div className='info-container'>
-                            <p className='card-text'><strong>Participants:</strong> {project.Participants.length}</p>
-                            <p className='card-text'><strong>Raise Goal:</strong> {project.RaiseGoal}$</p>
-                            <p className='card-text'><strong>Sale Ends:</strong> {moment.unix(project.SaleEnds.seconds).format('MMMM Do YYYY, h:mm a')}</p>
+                            <p className='card-text'><strong>Participants:</strong> </p>
+                            <p className='card-text'>{project.Participants.length}</p>
+                        </div>
+
+                        <div className='info-container'>
+                            <p className='card-text'><strong>Raise Goal:</strong> </p>
+                            <p className='card-text'>{project.RaiseGoal}$</p>
+                        </div>
+
+                        <div className='info-container'>
+                            <p className='card-text'><strong>{isRegistrationOn ? "Closes on:":"Closed on:"}</strong></p>
+                            <p className='card-text'>{moment.unix(project.RegistrationEnds.seconds).format('MMMM Do YYYY, h:mm a')}</p>
+                        </div>
+
+                        <div className='info-container'>
+                            <p className='card-text'><strong>Merkle Root:</strong></p>
+                            <p className='card-text'>{project.MerkleRoot?project.MerkleRoot.slice(0,6) + "..." + project.MerkleRoot.slice(-6):"TBA"}</p>
+                        </div>
+
+                        <div className='info-container'>
+                            <p className='card-text'><strong>Status:</strong></p>
+                            <p className='card-text'>{project.isPublished? "Published":"Pending to publish"}</p>
                         </div>
                         
-                        <button className='participate-button' onClick={() => handleRegisterInterest(project.id, connectedWallet)}>
+                        <button 
+                            className={`participate-button ${!isRegistrationOn && connectedWallet &&  isWhitelisted ? 'status-positive' : ''}`} 
+                            disabled={!isRegistrationOn ||isParticipant}
+                            onClick={()=>handleRegisterInterest(project.id,connectedWallet)}
+                        >
                             {!connectedWallet ? "Connect Wallet" :
-                                isAfterCurrentDate ? (isParticipant ? 'Registered' : 'Register Now!') :
-                                isWhitelisted ? "You are Whitelisted" : "You are not Whitelisted"}
+                                isRegistrationOn ? (isParticipant ? 'You are Registered' : 'Register Now!') :
+                                project.MerkleRoot? (isWhitelisted ? "You are Whitelisted 😎" : "You are not Whitelisted"):
+                                "Wait for the Raffle !"
+                            }
                         </button>
-    
+                            
                         <div className='raffle-container'>
                             <br></br>
-                            <button className='run-raffle-button' onClick={() => handleRunRaffle(project.id)}>
-                                {isAfterCurrentDate ? ( <>
-                                                        Registration Ends in:<br />{durationString}
-                                                        </>):
-                                    project.MerkleRoot ? (
-                                        !project.isPublished && isOwner ? (
-                                            <div onClick={() => handlePublishRoot(project.id)}>
-                                                Publish Merkle Root:<br />
-                                                {project.MerkleRoot.slice(0,4) + "..." + project.MerkleRoot.slice(-4)}
-                                            </div>
-                                        ) : (
-                                            <>
-                                                {project.isPublished ? "Root is Published:" : "Project Merkle Root:"}<br />
-                                                {project.MerkleRoot.slice(0,4) + "..." + project.MerkleRoot.slice(-4)}
-                                            </>
-                                        )
-                                    ) : 'Raffle Now!'
-                                }
-                            </button>
+                            {isOwner && (
+                                <button className='run-raffle-button' onClick={() => handleRunRaffle(project.id)}>
+                                  
+                                {loading ?  "loading..."
+                                :isRegistrationOn ? (
+                                    <>
+                                    Registration Ends in:<br />{durationString}
+                                    </>
+                                ) : project.MerkleRoot ? (
+                                    !project.isPublished ? (
+                                    <div onClick={() => handlePublishRoot(project.id)}>
+                                        Publish Merkle Root:<br />
+                                        {project.MerkleRoot.slice(0,4) + "..." + project.MerkleRoot.slice(-4)}
+                                    </div>
+                                    ) : (
+                                    <>
+                                        {project.isPublished ? "Root is Published:" : "Project Merkle Root:"}<br />
+                                        {project.MerkleRoot.slice(0,4) + "..." + project.MerkleRoot.slice(-4)}
+                                    </>
+                                    )
+                                ) : 'Raffle Now!'}
+                                </button>
+                            )}
                         </div>
                     </div>
                 );

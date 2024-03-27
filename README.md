@@ -3,13 +3,14 @@
 
 ## Overview
 
-This Raffle Application is a decentralized application (dApp) built to facilitate transparent and fair raffles using Ethereum blockchain technology. It ensures that the selection process is tamper-proof and verifiable by all participants.
+Transpad stands for a transparent launchpad. A launchpad where the winners selection process is transparent and fair via a raffle system that combines an off-chain RNG calculation, the cleverness of Merkle trees and the immutability of Ethereum. This raffle system ensures that the selection process is tamper-proof and verifiable by all participants. 
 
 ## Features
 
-- **Project Management**: Create and manage raffle projects with ease.
+- **Project Management**: Create and manage projects with ease.
 - **Merkle Root Calculation**: Utilizes Merkle trees to ensure transparency and fairness in the selection process.
 - **Winner Selection**: Automates the process of selecting winners from the pool of participants.
+- **Publishing the root**: Publishes the merkle root on-chain.
 - **Firebase Integration**: Leverages Firebase for robust backend management, including Firestore for data storage and Firebase Cloud Functions for backend logic.
 - **Local Emulator Support**: Includes setup for Firebase Local Emulator for local testing and development.
 - **React Frontend**: Provides a responsive and user-friendly interface built with React.
@@ -21,7 +22,7 @@ These instructions will get you a copy of the project up and running on your loc
 **For now you will not be able to add new Projects unless you configure the app with your own firebase account. you can add Projects directly from the firebase UI.**
 
 ## Files and directories
-- contracts: Contain the smart contracts and their tests using Foundry. To run tests you should install foundry
+- contracts: Contain the smart contracts and their tests using Foundry. To run tests you should install foundry and run ```bash forge test -vv.
 - functions: contains the firebase cloud function defintions
 - src: contains all the front-end logic using react 
 
