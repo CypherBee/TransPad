@@ -1,4 +1,4 @@
-import {buildMerkleTreeFromArray} from '../utils/MerkleRoot.js';
+import {buildMerkleTreeFromArray} from './MerkleRoot.js';
 
 
 //getting the Merkle Tree
@@ -45,16 +45,6 @@ function selectKFromNAddresses(addresses, k, merkleRoot) {
 
     return Array.from(selectedAddresses);
 }
-
-
-// Testing Constants
-const addresses = ['0xd685F9A87f5Cbd534824BF1dea581a8DE083f2DA', '0xd685F9A87f5Cbd534824BF1dea581a8DE083f3DA', '0xd685F9A87f5Cbd534824BF1dea581a8DE083f4DA', '0xd685F9A87f5Cbd534824BF1dea581a8DE083f5DA', '0xd685F9A87f5Cbd534824BF1dea581a8DE083f6DA']; // Replace with actual addresses
-const k = 2;
-const merkleRoot = '0x3f5ef9ffe259f05968e28dcdba2ceb2bc56d4af13dc54b198db979914891e632'; 
-
-
-//const selectedAddresses = selectKFromNAddresses(addresses, k, merkleRoot);
-//console.log(selectedAddresses);
-//getMerkleRoot("kkkJSMOKOB9tBKB6L00I",projectsSample);
+//-------------------------------------//
 
 export { SeededRNG, calculateMerkleRoot as getMerkleRoot, selectKFromNAddresses };

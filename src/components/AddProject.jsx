@@ -1,19 +1,85 @@
-import db from './firebase.js';
-import {addDoc} from 'firebase/firestore';
+import {db} from '../../firebase.js';
+import {collection,addDoc} from 'firebase/firestore';
 
 
-const newProject = {
-    Name: "Pepe",
-    Participants: [
-      "0xd685F9A87f5Cbd534824BF1dea581a8DE083f2DA",
-      "0x7d5549df4e94a29660ae30999d2c7fa76542f879",
-      "0x6d5549df4e94a29660ae30999d2c7fa76542f879",
-      "0x5d5549df4e94a29660ae30999d2c7fa76542f879",
-      "0x4d5549df4e94a29660ae30999d2c7fa76542f879",
-      "0x3d5549df4e94a29660ae30999d2c7fa76542f879",
-      "0x2d5549df4e94a29660ae30999d2c7fa76542f879",
-      "0x1d5549df4e94a29660ae30999d2c7fa76542f879"],
-    PhotoUrl: "https://firebasestorage.googleapis.com/v0/b/transpad-7f889.appspot.com/o/pepe.jpg?alt=media&token=43efaf4b-eab3-48e3-8de2-65f612cb0770",
-    RaiseGoal: 50,
-    SaleEnds: new Date('March 8, 2024 07:01:37 AM UTC+2')
+
+import React, { useState } from 'react';
+
+function AddProjectForm() {
+  const [name, setName] = useState('');
+  const [photoUrl, setPhotoUrl] = useState('');
+  const [raiseGoal, setRaiseGoal] = useState('');
+  const [registrationEnds, setregistrationEnds] = useState('');
+  const [isPending,setIsPending]=useState(false)
+
+  const handleNameChange = (e) => {
+    setName(e.target.value);
   };
+
+  const handlePhotoUrlChange = (e) => {
+    setPhotoUrl(e.target.value);
+  };
+
+  const handleRaiseGoalChange = (e) => {
+    setRaiseGoal(e.target.value);
+  };
+
+  const handleRegistrationEnds = (e) => {
+    setregistrationEnds(e.target.value);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const newProject = {
+      Name: name,
+      PhotoUrl: photoUrl,
+      RaiseGoal: parseInt(raiseGoal, 10),
+      RegistrationEnds: new Date(registrationEnds),
+      Participants:[]
+    };
+    setIsPending(true)
+
+    addDoc(collection(db,"Projects"),newProject)
+    .then((docRef) => {
+      console.log("Document written with ID: ", docRef.id);
+    })
+    .catch((error) => {
+      console.error("Error adding document: ", error);
+    });
+
+    console.log(newProject);
+    setIsPending(false)
+  };
+
+  return (
+    <div className='create'>
+    <h2>Add a new Project</h2>
+    <form onSubmit={handleSubmit}>
+      <label>
+        Name:
+        <input type="text" value={name} onChange={handleNameChange} />
+      </label>
+      <br />
+      <label>
+        Photo URL:
+        <input type="text" value={photoUrl} onChange={handlePhotoUrlChange} />
+      </label>
+      <br />
+      <label>
+        Raise Goal:
+        <input type="number" value={raiseGoal} onChange={handleRaiseGoalChange} />
+      </label>
+      <br />
+      <label>
+        Registration Ends:
+        <input type="datetime-local" value={registrationEnds} onChange={handleRegistrationEnds} />
+      </label>
+      <br />
+      {!isPending && <button type="submit">Add Project</button>}
+      {isPending && <button disabled>Adding new project...</button>}
+    </form>
+    </div>
+  );
+}
+
+export default AddProjectForm;

@@ -1,8 +1,23 @@
 import { StandardMerkleTree,SimpleMerkleTree } from "@openzeppelin/merkle-tree";
 import {keccak256} from '@ethersproject/keccak256';
-import path from 'path';
+//import path from 'path';
 
 
+//----- Build a Simple Merkle tree ----//
+export async function buildMerkleTreeFromArray(obj)
+{
+  console.log(obj)
+  const hashedArray=obj.map((e)=>keccak256(e))
+  const tree=SimpleMerkleTree.of(hashedArray, ["address", "uint256"]);
+  console.log('Merkle Root:', tree.root,tree);
+  return(tree.root)
+}
+
+
+
+
+
+//----- Build a Standard Merkle tree, It will be used later ----//
 
 // if we want to read a file from the arguments enable these two lines.
 // const csvFilePath = process.argv[2];
@@ -38,7 +53,7 @@ function csvToArray(csvString) {
   return values;
 }
 
-// Build the merkle tree. Set the encoding to match the values.
+// Build a Standard merkle Tree. Set the encoding to match the values.
 async function buildMerkleTreeFromCsv(csv)
 {
   const csvData=await printFileContents(csv)
@@ -50,16 +65,13 @@ async function buildMerkleTreeFromCsv(csv)
   return(tree.root)
 }
 
-export async function buildMerkleTreeFromArray(obj)
-{
-  console.log(obj)
-  const hashedArray=obj.map((e)=>keccak256(e))
-  const tree=SimpleMerkleTree.of(hashedArray, ["address", "uint256"]);
-  console.log('Merkle Root:', tree.root,tree);
-  return(tree.root)
-}
 
 
+
+
+
+//----------------------------------------------------------------------------------//
+//Run example:
 //buildMerkleTreeFromArray(["0xd685F9A87f5Cbd534824BF1dea581a8DE083f2DA","0x7d5549df4e94a29660ae30999d2c7fa76542f879"])
 
 // if we want to read a file from the arguments enable these two lines.

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import moment from 'moment';
-import {db,app} from '../../firebase.js';
+import {db,app,functions} from '../../firebase.js';
 import { getFunctions, httpsCallable, connectFunctionsEmulator } from 'firebase/functions';
 import  {ethers}  from 'ethers';
 import {publishMerkleRoot} from '../services/PublishMerkleRoot.js'
@@ -9,23 +9,22 @@ import {
     updateDoc,
     collection,
     getDocs,
-    getDoc,
-    setDoc,
+    getDoc
+
 } from 'firebase/firestore';
 
 
 
 function ProjectCards({connectedWallet}){
 
-    const functions = getFunctions(app);
-    connectFunctionsEmulator(functions, "localhost", 5001);
-
     
     const [loading, setLoading] = useState(false);
     const [projects, setProjects]=useState([]);
-    const [publishedProject, setPublishedProject] = useState(null);
+    const [loadingStates, setLoadingStates] = useState({});
     const [appOwner,setAppOwner]=useState("0x7d5549dF4E94a29660AE30999d2C7fa76542f879")
     const colRef=collection(db,'Projects');
+
+    
 
     useEffect(() => {
         let isMounted = true;
@@ -59,6 +58,15 @@ function ProjectCards({connectedWallet}){
         };
 
     }, []);
+
+            // Initialize loading states
+        useEffect(() => {
+            const initialLoadingStates = {};
+            projects.forEach(project => {
+            initialLoadingStates[project.id] = false;
+            });
+            setLoadingStates(initialLoadingStates);
+        }, [projects]);
 
 
 
@@ -129,7 +137,7 @@ function ProjectCards({connectedWallet}){
             }
             
             try {
-                setLoading(true);
+                setLoadingStates(prev => ({ ...prev, [projectId]: true }));
                 const addresses = project.Participants;
                 const k=3;
                 const {merkleRoot,winnersList} = await executeCalls(addresses, k);
@@ -144,15 +152,16 @@ function ProjectCards({connectedWallet}){
             } catch (error) {
                 console.error(error);
             }
-            setLoading(false);
+            setLoadingStates(prev => ({ ...prev, [projectId]: false }));
 
         }
 
 
     const handlePublishRoot = async (projectId) => {
         const project = projects.find(project => project.id === projectId);
-        setLoading(true);    
-        setPublishedProject(false);
+        
+        setLoadingStates(prev => ({ ...prev, [projectId]: true }));
+
         try {
             // Get the signer from the user's wallet
             const provider = new ethers.BrowserProvider(window.ethereum);
@@ -164,7 +173,6 @@ function ProjectCards({connectedWallet}){
             const projectData = projectDoc.data();
             if (projectData.isPublished && project.merkleRoot) {
                 console.log('Project is already published.');
-                setLoading(false);
                 return; // Stop the function execution if the project is already published
             }
 
@@ -179,17 +187,15 @@ function ProjectCards({connectedWallet}){
             await updateDoc(projectRef, { "isPublished": true, "ScProjectId":scProjectId });
             const updatedProjects = projects.map(p => p.id === projectId ? { ...p, isPublished:true} : p);
             setProjects(updatedProjects);
-            setPublishedProject(true);
 
             } 
         catch (error) 
             {
             console.error('Error publishing the Merkle root:', error);
             // Handle the error as needed
-            setPublishedProject(false);
             }
-    
-        setLoading(false);
+        setLoadingStates(prev => ({ ...prev, [projectId]: false }));
+
 
     };
 
@@ -254,7 +260,7 @@ function ProjectCards({connectedWallet}){
                             {isOwner && (
                                 <button className='run-raffle-button' onClick={() => handleRunRaffle(project.id)}>
                                   
-                                {loading ?  "loading..."
+                                {loadingStates[project.id]  ?  "loading..."
                                 :isRegistrationOn ? (
                                     <>
                                     Registration Ends in:<br />{durationString}

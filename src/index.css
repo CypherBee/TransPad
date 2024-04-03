@@ -8,6 +8,41 @@
   font-family: "Montserrat",sans-serif;
 }
 
+
+/* create new blog form */
+.create {
+  max-width: 400px;
+  min-width: 250px;  
+  margin: 0 auto;
+  margin-bottom: 50px;
+  text-align: center;
+  border: 1px solid hsl(0, 1%, 80%);
+  border-radius: 10px;
+  box-shadow: 5px 5px 5px hsl(0, 0%, 0%,0.1);
+  padding:10px
+
+}
+
+.create label {
+  text-align: left;
+  display: block;
+  padding-inline:20px
+}
+
+.create h2 {
+  font-size: 20px;
+  margin: 30px;
+}
+
+.create input{
+  width: 100%;
+  padding: 12px 20px;
+  margin: 8px 10v;
+  box-sizing: border-box;
+}
+
+
+
 button{
   font-weight: 500;
   font-size: 20px;

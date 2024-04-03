@@ -2,12 +2,9 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 
-
-contract RootStorage is Ownable(msg.sender),ReentrancyGuard {
+contract RootStorage is Ownable(msg.sender) {
     
     struct Project  {
         string merkleRoot;
@@ -36,7 +33,7 @@ contract RootStorage is Ownable(msg.sender),ReentrancyGuard {
         projectCount++;
     }
 
-    function registerInterest(uint256 projectId) public nonReentrant {
+    function registerInterest(uint256 projectId) public{
         require(projectId < projects.length, "Project ID does not exist");
         Project storage project=projects[projectId];
 
