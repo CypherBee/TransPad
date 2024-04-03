@@ -1,5 +1,6 @@
 # Raffle Application
-![image](https://github.com/CypherBee/TransPad/assets/99687146/2dde75ba-7175-4e40-8201-109b7e5099b8)
+![image](https://github.com/CypherBee/TransPad/assets/99687146/cdceff97-5d84-4f6f-b731-24ba06480381)
+
 
 ## Overview
 
@@ -22,7 +23,8 @@ These instructions will get you a copy of the project up and running on your loc
 **For now you will not be able to add new Projects unless you configure the app with your own firebase account. you can add Projects directly from the firebase UI.**
 
 ## Files and directories
-- contracts: Contain the smart contracts and their tests using Foundry. To run tests you should install foundry and run ```bash forge test -vv.
+- contracts: Contain the smart contracts and their tests using Foundry. To run tests you should install foundry and run forge test -vv.
+
 - functions: contains the firebase cloud function defintions
 - src: contains all the front-end logic using react 
 
