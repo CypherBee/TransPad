@@ -1,10 +1,9 @@
-
-function x(){
-
-    return (<>
-    <button>Click me</button>
-    </>)
-
+function x() {
+  return (
+    <>
+      <button>Click me</button>
+    </>
+  );
 }
 
-export default x
+export default x;

@@ -1,21 +1,18 @@
-import { StandardMerkleTree,SimpleMerkleTree } from "@openzeppelin/merkle-tree";
-import {keccak256} from '@ethersproject/keccak256';
+import {
+  StandardMerkleTree,
+  SimpleMerkleTree,
+} from "@openzeppelin/merkle-tree";
+import { keccak256 } from "@ethersproject/keccak256";
 //import path from 'path';
 
-
 //----- Build a Simple Merkle tree ----//
-export async function buildMerkleTreeFromArray(obj)
-{
-  console.log(obj)
-  const hashedArray=obj.map((e)=>keccak256(e))
-  const tree=SimpleMerkleTree.of(hashedArray, ["address", "uint256"]);
-  console.log('Merkle Root:', tree.root,tree);
-  return(tree.root)
+export async function buildMerkleTreeFromArray(obj) {
+  console.log(obj);
+  const hashedArray = obj.map((e) => keccak256(e));
+  const tree = SimpleMerkleTree.of(hashedArray, ["address", "uint256"]);
+  console.log("Merkle Root:", tree.root, tree);
+  return tree.root;
 }
-
-
-
-
 
 //----- Build a Standard Merkle tree, It will be used later ----//
 
@@ -25,50 +22,47 @@ export async function buildMerkleTreeFromArray(obj)
 
 function printFileContents(file) {
   return new Promise((resolve, reject) => {
-    fs.readFile(file, 'utf8', (err, data) => {
+    fs.readFile(file, "utf8", (err, data) => {
       if (err) {
-        reject(err); 
+        reject(err);
         return;
       }
-      resolve(data); 
-
-  });
+      resolve(data);
+    });
   });
 }
 
 // Convert the read data to the Array that will be fed to the Standard Merkle Tree
 function csvToArray(csvString) {
-  const rows = csvString.split("\n"); 
+  const rows = csvString.split("\n");
   const values = [];
 
-  for (let i = 1; i < rows.length; i++) { // Process all rows (no header check)
-     if (rows[i].trim() === "") continue;
-    const row = rows[i].split(","); 
-    const address = row[0].trim(); 
-    const balanceBN =  parseInt(row[1].replace(/,/g, ""));
+  for (let i = 1; i < rows.length; i++) {
+    // Process all rows (no header check)
+    if (rows[i].trim() === "") continue;
+    const row = rows[i].split(",");
+    const address = row[0].trim();
+    const balanceBN = parseInt(row[1].replace(/,/g, ""));
 
-    values.push([address, balanceBN]); 
+    values.push([address, balanceBN]);
   }
 
   return values;
 }
 
 // Build a Standard merkle Tree. Set the encoding to match the values.
-async function buildMerkleTreeFromCsv(csv)
-{
-  const csvData=await printFileContents(csv)
-  const array=csvToArray(csvData)
-  const tree=  StandardMerkleTree.of(array, ["address", "uint256"]);
-  const treeFilePath = path.join(import.meta.dirname, "../../lib/tree_" +tree.root+".json");
+async function buildMerkleTreeFromCsv(csv) {
+  const csvData = await printFileContents(csv);
+  const array = csvToArray(csvData);
+  const tree = StandardMerkleTree.of(array, ["address", "uint256"]);
+  const treeFilePath = path.join(
+    import.meta.dirname,
+    "../../lib/tree_" + tree.root + ".json"
+  );
   fs.writeFileSync(treeFilePath, JSON.stringify(tree.dump()));
-  console.log('Merkle Root:', tree.root);
-  return(tree.root)
+  console.log("Merkle Root:", tree.root);
+  return tree.root;
 }
-
-
-
-
-
 
 //----------------------------------------------------------------------------------//
 //Run example:
